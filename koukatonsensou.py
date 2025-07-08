@@ -8,37 +8,72 @@ import pygame as pg
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 WIDTH, HEIGHT = 800, 400
 # ユニットの設定
-class CatUnit:
-    def __init__(self):
-        self.x = 50
-        self.y = HEIGHT - 60
-        self.hp = 100
-        self.speed = 1
-        self.damage = 5
-        self.screen = pg.display.set_mode((WIDTH, HEIGHT))
+
+
+class BaseCatUnit:
+    def __init__(self, x, y, hp, damage, speed, image_path):
+        self.x = x
+        self.y = y
+        self.hp = hp
+        self.damage = damage
+        self.speed = speed
+        self.img = pg.image.load(image_path)
+        self.img = pg.transform.flip(self.img, True, False)
+        self.rct = self.img.get_rect()
+        self.rct.center = (self.x, self.y)
 
     def move(self):
         self.x += self.speed
+        self.rct.centerx = self.x
 
-    def draw(self):
-        pg.draw.rect(self.screen, (200, 200, 255), (self.x, self.y, 30, 30))
+    def draw(self, screen: pg.Surface):
+        screen.blit(self.img, self.rct)
 
-class EnemyUnit:
+# 各キャラの定義
+class NormalCat(BaseCatUnit):
     def __init__(self):
-        self.x = WIDTH - 80
-        self.y = HEIGHT - 60
-        self.hp = 50
-        self.speed = 0.5
-        self.damage = 2
-        self.screen = pg.display.set_mode((WIDTH, HEIGHT))
+        super().__init__(50, HEIGHT - 60, 100, 5, 1, "fig/5.png")
+
+class TankCat(BaseCatUnit):
+    def __init__(self):
+        super().__init__(50, HEIGHT - 60, 300, 2, 0.5, "fig/9.png")
+
+class SpeedCat(BaseCatUnit):
+    def __init__(self):
+        super().__init__(50, HEIGHT - 60, 50, 8, 2, "fig/3.png")
+
+class BaseEnemyUnit:
+    def __init__(self, x, y, hp, damage, speed, image_path):
+        self.x = x
+        self.y = y
+        self.hp = hp
+        self.damage = damage
+        self.speed = speed
+        self.img = pg.image.load(image_path)
+        self.img =  pg.transform.flip(self.img, True, False)
+        self.img = pg.transform.scale(self.img, (100,100))
+        self.rct = self.img.get_rect()
+        self.rct.center = self.x , self.y
+        
 
     def move(self):
         self.x -= self.speed
+        self.rct.centerx = self.x 
 
-    def draw(self):
-        pg.draw.rect(self.screen, (255, 100, 100), (self.x, self.y, 30, 30))
+    def draw(self, screen: pg.Surface):
+        screen.blit(self.img, self.rct)
 
+class NormalEnemy(BaseEnemyUnit):
+    def __init__(self):
+        super().__init__(WIDTH - 80, HEIGHT - 60, 50, 2, 0.5, "fig/tekikyara.png")
 
+class HeavyEnemy(BaseEnemyUnit):
+    def __init__(self):
+        super().__init__(WIDTH - 80, HEIGHT - 60, 150, 4, 0.3, "fig/tekikuma.png")
+
+class FastEnemy(BaseEnemyUnit):
+    def __init__(self):
+        super().__init__(WIDTH - 80, HEIGHT - 60, 30, 1, 1.2, "fig/tekitaka.png")
 
 # メインループ
 def main():
@@ -59,27 +94,38 @@ def main():
             if event.type == pg.QUIT:
                 return
 
-            # にゃんこ出撃
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
-                    cats.append(CatUnit())
+                    cats.append(NormalCat())
+                elif event.key == pg.K_a:
+                    cats.append(TankCat())
+                elif event.key == pg.K_s:
+                    cats.append(SpeedCat())
 
         screen.blit(bg_img, [0, 0])
 
         # 敵を定期的に出す
         enemy_spawn_timer += 1
-        if enemy_spawn_timer > 120:  # 2秒ごとに敵を出す
-            enemies.append(EnemyUnit())
+        if enemy_spawn_timer > 120:
+    # ランダムに敵を選ぶ
+            rand = random.randint(0, 9)
+            if rand < 6:
+                enemies.append(NormalEnemy())
+            elif rand < 9:
+                enemies.append(HeavyEnemy())
+            else:
+                enemies.append(FastEnemy())
+
             enemy_spawn_timer = 0
 
         # ユニットの動き・描画
         for cat in cats:
             cat.move()
-            cat.draw()
+            cat.draw(screen)
 
         for enemy in enemies:
             enemy.move()
-            enemy.draw()
+            enemy.draw(screen)
 
         # 簡易バトル処理
         for cat in cats:
