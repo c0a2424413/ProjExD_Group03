@@ -39,6 +39,47 @@ class EnemyUnit:
         pg.draw.rect(self.screen, (255, 100, 100), (self.x, self.y, 30, 30))
 
 
+class Balse:
+    """
+    こうかとん城と反こうかとん城を表示
+    どちらかの城の耐久値が０になったときに、爆破エフェクトを出す
+    味方の耐久値が０の時はゲームオーバー、敵の耐久値が０の時はゲームクリアを表示
+    数秒後、ゲームを終了する
+    """
+    def __init__(self, obj: "CatUnit|EnemyUnit", life: int):
+        self.x = 10
+        self.y = HEIGHT - 20
+        self.image = self.imgs1[0]
+        self.image = self.imgs2[0]
+        self.rect = self.image.get_rect(center=obj.rect.center)
+        self.life = life
+
+    def gameover(screen: pg.Surface) -> None: 
+        # ブラックアウト
+        img = pg.Surface((WIDTH, HEIGHT))
+        pg.draw.rect(img,(0,0,0),pg.Rect(0,0,WIDTH,HEIGHT))
+        img.set_alpha(200)
+        screen.blit(img,[0,0])
+        # 泣いているこうかとん一枚目
+        img = pg.image.load("fig/8.png")
+        bg_rct1 = img.get_rect()
+        bg_rct1.center = 800,320
+        # 泣いているこうかとん二枚目
+        img = pg.image.load("fig/8.png")
+        bg_rct2 = img.get_rect()
+        bg_rct2.center = 300,320
+        # GameOverのサイズと色 
+        fonto = pg.font.Font(None,80)
+        txt = fonto.render("Game Over",True,(255,255,255))
+        # 上記表示
+        screen.blit(img,bg_rct1)
+        screen.blit(img,bg_rct2)
+        screen.blit(txt,[400,300])
+        pg.display.update()  # 更新
+        time.sleep(5)  # 5秒間
+        return
+
+
 
 # メインループ
 def main():
@@ -52,6 +93,12 @@ def main():
     pg.display.set_caption("こうかとん大戦争")
     clock = pg.time.Clock()
     bg_img = pg.image.load("fig/umi.png") #背景画像のサーフェイス
+
+    img1 = pg.image.load("fig/八王子キャンパス.png")
+    img2 = pg.image.load("fig/蒲田キャンパス.png")
+
+
+
     
     while True:
 
@@ -87,6 +134,14 @@ def main():
                 if abs(cat.x - enemy.x) < 30:
                     enemy.hp -= cat.damage
                     cat.hp -= enemy.damage
+                
+        if catcassle >= 0:
+            gameover(screen)
+            return
+        
+        if enemycassle >= 0:
+            gameclear(screen)
+            return
 
         # 死亡処理
         cats = [c for c in cats if c.hp > 0]
