@@ -39,6 +39,29 @@ class EnemyUnit:
         pg.draw.rect(self.screen, (255, 100, 100), (self.x, self.y, 30, 30))
 
 
+class Castle:
+    """
+    敵味方の城オブジェクトの設定
+    """
+    def __init__(self, image, pos, font):
+        self.image = image
+        self.rect = self.image.get_rect(center=pos)
+        self.hp = 3
+        self.font = font
+
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
+        hp_text = self.font.render(str(self.hp), True, (255, 0, 0))
+        screen.blit(hp_text, (self.rect.centerx - 20, self.rect.centery - self.rect.height // 2 - 50))
+
+    def hit(self):
+        if self.hp > 0:
+            self.hp -= 1
+
+    def is_destroyed(self):
+        return self.hp <= 0
+
+
 class Balse:
     """
     こうかとん城と反こうかとん城を表示
@@ -54,30 +77,30 @@ class Balse:
         self.rect = self.image.get_rect(center=obj.rect.center)
         self.life = life
 
-    def gameover(screen: pg.Surface) -> None: 
-        # ブラックアウト
-        img = pg.Surface((WIDTH, HEIGHT))
-        pg.draw.rect(img,(0,0,0),pg.Rect(0,0,WIDTH,HEIGHT))
-        img.set_alpha(200)
-        screen.blit(img,[0,0])
-        # 泣いているこうかとん一枚目
-        img = pg.image.load("fig/8.png")
-        bg_rct1 = img.get_rect()
-        bg_rct1.center = 800,320
-        # 泣いているこうかとん二枚目
-        img = pg.image.load("fig/8.png")
-        bg_rct2 = img.get_rect()
-        bg_rct2.center = 300,320
-        # GameOverのサイズと色 
-        fonto = pg.font.Font(None,80)
-        txt = fonto.render("Game Over",True,(255,255,255))
-        # 上記表示
-        screen.blit(img,bg_rct1)
-        screen.blit(img,bg_rct2)
-        screen.blit(txt,[400,300])
-        pg.display.update()  # 更新
-        time.sleep(5)  # 5秒間
-        return
+    # def gameover(screen: pg.Surface) -> None: 
+    #     # ブラックアウト
+    #     img = pg.Surface((WIDTH, HEIGHT))
+    #     pg.draw.rect(img,(0,0,0),pg.Rect(0,0,WIDTH,HEIGHT))
+    #     img.set_alpha(200)
+    #     screen.blit(img,[0,0])
+    #     # 泣いているこうかとん一枚目
+    #     img = pg.image.load("fig/8.png")
+    #     bg_rct1 = img.get_rect()
+    #     bg_rct1.center = 800,320
+    #     # 泣いているこうかとん二枚目
+    #     img = pg.image.load("fig/8.png")
+    #     bg_rct2 = img.get_rect()
+    #     bg_rct2.center = 300,320
+    #     # GameOverのサイズと色 
+    #     fonto = pg.font.Font(None,80)
+    #     txt = fonto.render("Game Over",True,(255,255,255))
+    #     # 上記表示
+    #     screen.blit(img,bg_rct1)
+    #     screen.blit(img,bg_rct2)
+    #     screen.blit(txt,[400,300])
+    #     pg.display.update()  # 更新
+    #     time.sleep(5)  # 5秒間
+    #     return
 
 
 
@@ -94,8 +117,11 @@ def main():
     clock = pg.time.Clock()
     bg_img = pg.image.load("fig/umi.png") #背景画像のサーフェイス
 
-    img1 = pg.image.load("fig/八王子キャンパス.png")
-    img2 = pg.image.load("fig/蒲田キャンパス.png")
+    castle1 = pg.image.load("fig/八王子キャンパス.png")
+    castle2 = pg.image.load("fig/蒲田キャンパス.png")
+    happy1 = pg.image.load("fig/6.png")
+    sad1 = pg.image.load("fig/8.png")
+    exp = pg.image.load("fig/explosion.gif")
 
 
 
@@ -134,14 +160,16 @@ def main():
                 if abs(cat.x - enemy.x) < 30:
                     enemy.hp -= cat.damage
                     cat.hp -= enemy.damage
-                
-        if catcassle >= 0:
-            gameover(screen)
-            return
         
-        if enemycassle >= 0:
-            gameclear(screen)
-            return
+        # if enemy.rect.colliderect(enemy_castle.rect):
+        #     enemy_castle.hit()
+        # if catcassle >= 0:
+        #     gameover(screen)
+        #     return
+        
+        # if enemycassle >= 0:
+        #     gameclear(screen)
+        #     return
 
         # 死亡処理
         cats = [c for c in cats if c.hp > 0]
