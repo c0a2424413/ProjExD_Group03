@@ -12,96 +12,116 @@ class CatUnit:
     def __init__(self):
         self.x = 50
         self.y = HEIGHT - 60
+        self.width = 30
+        self.height = 30
         self.hp = 100
         self.speed = 1
         self.damage = 5
         self.screen = pg.display.set_mode((WIDTH, HEIGHT))
+        self.rect = pg.Rect(self.x, self.y, self.width, self.height)
 
     def move(self):
         self.x += self.speed
+        self.rect.topleft = (self.x, self.y)
 
     def draw(self):
-        pg.draw.rect(self.screen, (200, 200, 255), (self.x, self.y, 30, 30))
+        pg.draw.rect(self.screen, (200, 200, 255), self.rect)
+        
 
 class EnemyUnit:
     def __init__(self):
         self.x = WIDTH - 80
         self.y = HEIGHT - 60
+        self.width = 30
+        self.height = 30
         self.hp = 50
         self.speed = 0.5
         self.damage = 2
         self.screen = pg.display.set_mode((WIDTH, HEIGHT))
+        self.rect = pg.Rect(self.x, self.y, self.width, self.height)
 
     def move(self):
         self.x -= self.speed
+        self.rect.topleft = (self.x, self.y)
 
     def draw(self):
-        pg.draw.rect(self.screen, (255, 100, 100), (self.x, self.y, 30, 30))
+        pg.draw.rect(self.screen, (255, 100, 100), self.rect)
 
 
 class Castle:
     """
     敵味方の城オブジェクトの設定
     """
-    def __init__(self, image, pos, font):
+    def __init__(self, image, position, hp):
         self.image = image
-        self.rect = self.image.get_rect(center=pos)
-        self.hp = 3
-        self.font = font
+        self.rect = self.image.get_rect(topleft=position)
+        self.hp = hp
+        self.destroyed = False
 
-    def draw(self, screen):
+    def draw(self, screen, font):
         screen.blit(self.image, self.rect)
-        hp_text = self.font.render(str(self.hp), True, (255, 0, 0))
-        screen.blit(hp_text, (self.rect.centerx - 20, self.rect.centery - self.rect.height // 2 - 50))
+        hp_text1 = font.render(f"{self.hp}", True, (0, 0, 255))
+        hp_rect1 = hp_text1.get_rect(center=(self.rect.centerx, self.rect.top - 20))
+        screen.blit(hp_text1, hp_rect1)
+        # hp_text2 = font.render(f"{self.hp}", True, (255, 0, 0))
+        # hp_rect2 = hp_text2.get_rect(center=(self.rect.centerx, self.rect.top - 20))
+        # screen.blit(hp_text2, hp_rect2)
+        
 
-    def hit(self):
-        if self.hp > 0:
-            self.hp -= 1
+    def take_damage(self, amount):
+        self.hp -= amount
+        if self.hp <= 0:
+            self.hp = 0
+            self.destroyed = True
 
-    def is_destroyed(self):
-        return self.hp <= 0
 
-
-class Balse:
+class EndingManager:
     """
     こうかとん城と反こうかとん城を表示
     どちらかの城の耐久値が０になったときに、爆破エフェクトを出す
     味方の耐久値が０の時はゲームオーバー、敵の耐久値が０の時はゲームクリアを表示
     数秒後、ゲームを終了する
     """
-    def __init__(self, obj: "CatUnit|EnemyUnit", life: int):
-        self.x = 10
-        self.y = HEIGHT - 20
-        self.image = self.imgs1[0]
-        self.image = self.imgs2[0]
-        self.rect = self.image.get_rect(center=obj.rect.center)
-        self.life = life
+    def __init__(self, screen, explosion_img, font):
+        self.screen = screen
+        self.explosion_img = explosion_img
+        self.font = font
+        self.ended = False
+        self.end_time = None
+        self.message = ""
+        self.koka_img = None
+        self.explosion_pos = None
 
-    # def gameover(screen: pg.Surface) -> None: 
-    #     # ブラックアウト
-    #     img = pg.Surface((WIDTH, HEIGHT))
-    #     pg.draw.rect(img,(0,0,0),pg.Rect(0,0,WIDTH,HEIGHT))
-    #     img.set_alpha(200)
-    #     screen.blit(img,[0,0])
-    #     # 泣いているこうかとん一枚目
-    #     img = pg.image.load("fig/8.png")
-    #     bg_rct1 = img.get_rect()
-    #     bg_rct1.center = 800,320
-    #     # 泣いているこうかとん二枚目
-    #     img = pg.image.load("fig/8.png")
-    #     bg_rct2 = img.get_rect()
-    #     bg_rct2.center = 300,320
-    #     # GameOverのサイズと色 
-    #     fonto = pg.font.Font(None,80)
-    #     txt = fonto.render("Game Over",True,(255,255,255))
-    #     # 上記表示
-    #     screen.blit(img,bg_rct1)
-    #     screen.blit(img,bg_rct2)
-    #     screen.blit(txt,[400,300])
-    #     pg.display.update()  # 更新
-    #     time.sleep(5)  # 5秒間
-    #     return
+    def trigger_ending(self, castle, message, koka_img):
+        self.message = message
+        self.koka_img = koka_img
+        self.explosion_pos = castle.rect.center
+        self.end_time = time.time()
+        self.ended = True
 
+    def draw_ending(self):
+        if not self.ended:
+            return
+
+        # 爆破エフェクト
+        explosion_rect = self.explosion_img.get_rect(center=self.explosion_pos)
+        self.screen.blit(self.explosion_img, explosion_rect)
+
+        # テキスト
+        text = self.font.render(self.message, True, (255, 0, 0))
+        text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        self.screen.blit(text, text_rect)
+
+        # 両脇のこうかとん
+        left_koka_rect = self.koka_img.get_rect(midright=(text_rect.left - 20, text_rect.centery))
+        right_koka_rect = self.koka_img.get_rect(midleft=(text_rect.right + 20, text_rect.centery))
+        self.screen.blit(self.koka_img, left_koka_rect)
+        self.screen.blit(self.koka_img, right_koka_rect)
+
+    def check_exit(self):
+        if self.ended and time.time() - self.end_time >= 3:
+            pg.quit()
+            sys.exit()
 
 
 # メインループ
@@ -117,13 +137,17 @@ def main():
     clock = pg.time.Clock()
     bg_img = pg.image.load("fig/umi.png") #背景画像のサーフェイス
 
-    castle1 = pg.image.load("fig/八王子キャンパス.png")
-    castle2 = pg.image.load("fig/蒲田キャンパス.png")
-    happy1 = pg.image.load("fig/6.png")
-    sad1 = pg.image.load("fig/8.png")
+    castle1 = pg.image.load("fig/hachioji.png")
+    castle2 = pg.image.load("fig/kamata.png")
     exp = pg.image.load("fig/explosion.gif")
+    koka_smile_img = pg.image.load("fig/6.png")
+    koka_cry_img = pg.image.load("fig/8.png")
+    font = pg.font.Font(None, 80)
 
+    koukaton_castle = Castle(castle1, (0, 270), 10)
+    hankoukaton_castle = Castle(castle2, (WIDTH-100, 270), 10)
 
+    ending_manager = EndingManager(screen, exp, font)
 
     
     while True:
@@ -160,16 +184,31 @@ def main():
                 if abs(cat.x - enemy.x) < 30:
                     enemy.hp -= cat.damage
                     cat.hp -= enemy.damage
-        
-        # if enemy.rect.colliderect(enemy_castle.rect):
-        #     enemy_castle.hit()
-        # if catcassle >= 0:
-        #     gameover(screen)
-        #     return
-        
-        # if enemycassle >= 0:
-        #     gameclear(screen)
-        #     return
+
+        # 城との衝突判定
+        for cat in cats[:]:
+            if cat.rect.colliderect(hankoukaton_castle.rect):
+                hankoukaton_castle.take_damage(1)
+                cats.remove(cat)
+
+        for enemy in enemies[:]:
+            if enemy.rect.colliderect(koukaton_castle.rect):
+                koukaton_castle.take_damage(1)
+                enemies.remove(enemy)
+
+
+        # エンディング発動
+        if koukaton_castle.destroyed and not ending_manager.ended:
+            ending_manager.trigger_ending(koukaton_castle, "GAME OVER", koka_smile_img)
+        elif hankoukaton_castle.destroyed and not ending_manager.ended:
+            ending_manager.trigger_ending(hankoukaton_castle, "GAME CLEAR", koka_cry_img)
+
+        # 城を描画
+        koukaton_castle.draw(screen, font)
+        hankoukaton_castle.draw(screen, font)
+
+        ending_manager.draw_ending()
+        ending_manager.check_exit()
 
         # 死亡処理
         cats = [c for c in cats if c.hp > 0]
