@@ -57,15 +57,39 @@ class Buff:
         引数2 cats : catsリスト
         """
         for cat in cats:
-            cat.speed = 2  # スピードを1から2に変更
-            cat.damege = 6  # 与えるダメージを5から6に変更
+            cat.speed = 3  # スピードを3に変更
+            cat.damege = 10  # 与えるダメージを10に変更
         buff_img = pygame.Surface((WIDTH, HEIGHT)) 
         for i in range(20):
             pygame.draw.rect(buff_img,(0,255,100),(0,0,WIDTH,HEIGHT))  # 画面全体が緑色に光る
             buff_img.set_alpha(8*(i+1))
             screen.blit(buff_img,[0,0])
+            buff_timer = 0
             pygame.display.update()
             time.sleep(0.01)
+
+
+class BuffFont:
+    """
+    バフについて示す文字を表示するクラス
+    """
+    def __init__(self):
+        """
+        buff_stに代入されている文字列によってそれぞれ文字を画面に表示させる。
+        """
+        if buff_st == "yes":  # バフをかけられるか判定 
+            buff_ok_font = pygame.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体",30)  # fontでバフをかけられるかどうか示す(文字の描画)
+            txt2 = buff_ok_font.render("bキーでバフ!",True, (0, 0, 0))
+            buff_ok_rct = txt2.get_rect()
+            buff_ok_rct.center = (105,40)
+            screen.blit(txt2,buff_ok_rct)
+
+        if buff_st == "no":  # バフをかけられるようになるまでの時間
+            buff_no_font = pygame.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体",20)  # fontでバフをかけられるかどうか示す(文字の描画)
+            txt1 = buff_no_font.render(f"バフOKまで:{1200 - buff_timer}",True, (0, 0, 0))
+            buff_no_rct = txt1.get_rect()
+            buff_no_rct.center = (80,40)
+            screen.blit(txt1,buff_no_rct)
 
 
 # リスト
@@ -76,7 +100,7 @@ enemies = []
 enemy_spawn_timer = 0
 
 # バフをかけられるようになるまでのタイマー
-buff_timer = 1000
+buff_timer = 1000  # テストのため今は1000で設定
 buff_st = "no"
 
 # メインループ
@@ -88,14 +112,14 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        # にゃんこ出撃
+        # 味方ユニット出撃
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 cats.append(CatUnit())
 
         if event.type == pygame.KEYDOWN:
                 if buff_st == "yes":                 
-                    if event.key == pygame.K_b:
+                    if event.key == pygame.K_b:  # bキーを押したらバフ
                         Buff(cats,screen)
                         buff_st = "no"
 
@@ -106,17 +130,10 @@ while running:
         enemy_spawn_timer = 0
 
     buff_timer += 1  # 1/60秒に1増加
-    # print(buff_timer)
     if buff_timer > 1200:  # 20秒ごとにバフをかけられるようにする。
         buff_st = "yes"
         buff_timer = 0  # タイマーリセット
-    
-    if buff_st == "yes":  # バフをかけられるか判定 
-        buff_ok_font = pygame.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体",20)  # fontでバフをかけられるかどうか示す(文字の描画)
-        txt = buff_ok_font.render("bキーでバフ!",True, (0, 0, 0))
-        buff_ok_rct = txt.get_rect()
-        buff_ok_rct.center = (80,40)
-        screen.blit(txt,buff_ok_rct)
+    BuffFont()
 
     # ユニットの動き・描画
     for cat in cats:
