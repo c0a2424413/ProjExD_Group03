@@ -52,21 +52,18 @@ class Castle:
     """
     敵味方の城オブジェクトの設定
     """
-    def __init__(self, image, position, hp):
+    def __init__(self, image, position, hp, color):
         self.image = image
         self.rect = self.image.get_rect(topleft=position)
         self.hp = hp
+        self.color = color
         self.destroyed = False
 
     def draw(self, screen, font):
         screen.blit(self.image, self.rect)
-        hp_text1 = font.render(f"{self.hp}", True, (0, 0, 255))
-        hp_rect1 = hp_text1.get_rect(center=(self.rect.centerx, self.rect.top - 20))
-        screen.blit(hp_text1, hp_rect1)
-        # hp_text2 = font.render(f"{self.hp}", True, (255, 0, 0))
-        # hp_rect2 = hp_text2.get_rect(center=(self.rect.centerx, self.rect.top - 20))
-        # screen.blit(hp_text2, hp_rect2)
-        
+        hp_text = font.render(f"{self.hp}", True, self.color)
+        hp_rect = hp_text.get_rect(center=(self.rect.centerx, self.rect.top - 20))
+        screen.blit(hp_text, hp_rect)    
 
     def take_damage(self, amount):
         self.hp -= amount
@@ -107,6 +104,7 @@ class EndingManager:
         explosion_rect = self.explosion_img.get_rect(center=self.explosion_pos)
         self.screen.blit(self.explosion_img, explosion_rect)
 
+
         # テキスト
         text = self.font.render(self.message, True, (255, 0, 0))
         text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
@@ -140,12 +138,12 @@ def main():
     castle1 = pg.image.load("fig/hachioji.png")
     castle2 = pg.image.load("fig/kamata.png")
     exp = pg.image.load("fig/explosion.gif")
-    koka_smile_img = pg.image.load("fig/6.png")
-    koka_cry_img = pg.image.load("fig/8.png")
+    koka_smile_img = pg.image.load("fig/8.png")
+    koka_cry_img = pg.image.load("fig/6.png")
     font = pg.font.Font(None, 80)
 
-    koukaton_castle = Castle(castle1, (0, 270), 10)
-    hankoukaton_castle = Castle(castle2, (WIDTH-100, 270), 10)
+    koukaton_castle = Castle(castle1, (0, 270), 10, (0, 0 ,255))
+    hankoukaton_castle = Castle(castle2, (WIDTH-100, 270), 10, (255, 0, 0))
 
     ending_manager = EndingManager(screen, exp, font)
 
