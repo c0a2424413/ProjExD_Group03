@@ -80,6 +80,7 @@ class FastEnemy(BaseEnemyUnit):
 
 
 class DefenseCannon:
+    """こうかとん砲に関するクラス"""
     def __init__(self, x, y):
         self.x = x
         self.y = y
