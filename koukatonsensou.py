@@ -67,6 +67,52 @@ class NormalEnemy(BaseEnemyUnit):
     def __init__(self):
         super().__init__(WIDTH - 80, HEIGHT - 60, 50, 2, 0.5, "fig/tekikyara.png")
 
+class Buff:
+    """
+    味方ユニットにバフを掛ける機能に関するクラス
+    """
+    def __init__(self,screen,cats):
+        """
+        画面内にいる味方ユニットの速度と与えるダメージを増加させる。また画面を緑に光らせる。
+        引数 screen : 画面Surface
+        引数2 cats : catsリスト
+        """
+        for cat in cats:
+            cat.speed = 3  # スピードを3に変更
+            cat.damege = 10  # 与えるダメージを10に変更
+        buff_img = pg.Surface((WIDTH, HEIGHT)) 
+        for i in range(20):
+            pg.draw.rect(buff_img,(0,255,100),(0,0,WIDTH,HEIGHT))  # 画面全体が緑色に光る
+            buff_img.set_alpha(8*(i+1))
+            screen.blit(buff_img,[0,0])
+            buff_timer = 0
+            pg.display.update()
+            time.sleep(0.01)
+
+
+class BuffFont:
+    """
+    バフについて示す文字を表示するクラス
+    """
+    def __init__(self,screen,buff_timer,buff_st):
+        """
+        buff_stに代入されている文字列によってそれぞれ文字を画面に表示させる。
+        """
+        if buff_st == "yes":  # バフをかけられるか判定 
+            buff_ok_font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体",30)  # fontでバフをかけられるかどうか示す(文字の描画)
+            txt2 = buff_ok_font.render("bキーでバフ!",True, (0, 0, 0))
+            buff_ok_rct = txt2.get_rect()
+            buff_ok_rct.center = (105,40)
+            screen.blit(txt2,buff_ok_rct)
+
+        if buff_st == "no":  # バフをかけられるようになるまでの時間
+            buff_no_font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体",20)  # fontでバフをかけられるかどうか示す(文字の描画)
+            txt1 = buff_no_font.render(f"バフOKまで:{1200 - buff_timer}",True, (0, 0, 0))
+            buff_no_rct = txt1.get_rect()
+            buff_no_rct.center = (80,40)
+            screen.blit(txt1,buff_no_rct)
+
+
 class HeavyEnemy(BaseEnemyUnit):
     def __init__(self):
         super().__init__(WIDTH - 80, HEIGHT - 60, 150, 4, 0.3, "fig/tekikuma.png")
@@ -74,6 +120,8 @@ class HeavyEnemy(BaseEnemyUnit):
 class FastEnemy(BaseEnemyUnit):
     def __init__(self):
         super().__init__(WIDTH - 80, HEIGHT - 60, 30, 1, 1.2, "fig/tekitaka.png")
+buff_st = "no"
+
 
 # メインループ
 def main():
@@ -83,6 +131,10 @@ def main():
 
     # タイマー
     enemy_spawn_timer = 0
+    # バフをかけられるようになるまでのタイマー
+    buff_timer = 0  # テストのため今は1000で設定
+    buff_st = "no"
+
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     pg.display.set_caption("こうかとん大戦争")
     clock = pg.time.Clock()
@@ -102,9 +154,22 @@ def main():
                 elif event.key == pg.K_s:
                     cats.append(SpeedCat())
 
+
+                if event.key == pg.K_b:  # bキーを押したらバフ
+                    if buff_st == "yes":   
+                        Buff(screen,cats)
+                        buff_st = "no"
         screen.blit(bg_img, [0, 0])
 
-        # 敵を定期的に出す
+        buff_timer += 1  # 1/60秒に1増加
+        if buff_timer > 1200:  # 20秒ごとにバフをかけられるようにする。
+            buff_st = "yes"
+            print("テストテストテスト")
+            buff_timer = 0  # タイマーリセット
+        BuffFont(screen,buff_timer,buff_st)
+
+
+            # 敵を定期的に出す
         enemy_spawn_timer += 1
         if enemy_spawn_timer > 120:
     # ランダムに敵を選ぶ
